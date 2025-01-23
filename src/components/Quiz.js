@@ -1,52 +1,87 @@
+// src/components/Quiz.js
+
 import React, { useState } from 'react';
 import quizData from '../data/quizData.json';
 
 const Quiz = () => {
+  const [stage, setStage] = useState('category'); // stages: category, quiz, score
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
-  const [showScore, setShowScore] = useState(false);
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setStage('quiz');
+  };
 
   const handleAnswerClick = (selectedAnswer) => {
-    if (selectedAnswer === quizData[currentQuestion].answer) {
+    const correctAnswer = selectedCategory.questions[currentQuestion].answer;
+    if (selectedAnswer === correctAnswer) {
       setScore(score + 1);
     }
 
     const nextQuestion = currentQuestion + 1;
-    if (nextQuestion < quizData.length) {
+    if (nextQuestion < selectedCategory.questions.length) {
       setCurrentQuestion(nextQuestion);
     } else {
-      setShowScore(true);
+      setStage('score');
     }
   };
 
   const restartQuiz = () => {
+    setStage('category');
+    setSelectedCategory(null);
     setCurrentQuestion(0);
     setScore(0);
-    setShowScore(false);
   };
 
   return (
-    <div className="quiz-container">
-      {showScore ? (
-        <div className="score-section">
-          <h2>You scored {score} out of {quizData.length}!</h2>
-          <button onClick={restartQuiz}>Restart Quiz</button>
-        </div>
-      ) : (
-        <>
-          <div className="question-section">
-            <h2>Question {currentQuestion + 1}</h2>
-            <p>{quizData[currentQuestion].question}</p>
+    <div className="app">
+      <div className="quiz-container">
+        {stage === 'category' && (
+          <div className="category-section">
+            <h2>Select a Category</h2>
+            <div className="categories">
+              {quizData.map((cat, index) => (
+                <button
+                  key={index}
+                  className="category-button"
+                  onClick={() => handleCategorySelect(cat)}
+                >
+                  {cat.category}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="options-section">
-            {quizData[currentQuestion].options.map((option, index) => (
-              <button key={index} onClick={() => handleAnswerClick(option)}>
-                {option}
-              </button>
-            ))}
+        )}
+
+        {stage === 'quiz' && selectedCategory && (
+          <>
+            <div className="question-section">
+              <h2>
+                Question {currentQuestion + 1} of {selectedCategory.questions.length}
+              </h2>
+              <p>{selectedCategory.questions[currentQuestion].question}</p>
+            </div>
+            <div className="options-section">
+              {selectedCategory.questions[currentQuestion].options.map((option, index) => (
+                <button key={index} onClick={() => handleAnswerClick(option)}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {stage === 'score' && (
+          <div className="score-section">
+            <h2>
+              You scored {score} out of {selectedCategory.questions.length}!
+            </h2>
+            <button onClick={restartQuiz}>Restart Quiz</button>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };
